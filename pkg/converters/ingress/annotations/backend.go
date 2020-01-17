@@ -56,6 +56,7 @@ func (c *updater) buildBackendAffinity(d *backData) {
 	d.backend.Cookie.Strategy = strategyName
 	d.backend.Cookie.Dynamic = d.mapper.Get(ingtypes.BackSessionCookieDynamic).Bool()
 	d.backend.Cookie.Shared = d.mapper.Get(ingtypes.BackSessionCookieShared).Bool()
+	d.backend.Cookie.SameSite = d.mapper.Get(ingtypes.BackSessionCookieSameSite).Value
 }
 
 func (c *updater) buildBackendAuthHTTP(d *backData) {
@@ -112,8 +113,8 @@ func (c *updater) buildBackendAuthHTTP(d *backData) {
 				realm = authRealm.Value
 			}
 			return map[string]*ConfigValue{
-				"username": &ConfigValue{Value: userlist.Name},
-				"realm":    &ConfigValue{Value: realm},
+				"username": {Value: userlist.Name},
+				"realm":    {Value: realm},
 			}
 		},
 	)

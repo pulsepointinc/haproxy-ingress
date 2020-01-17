@@ -97,7 +97,7 @@ func TestBuildFrontend(t *testing.T) {
 					Timeout: timeout10,
 					Hosts:   []*Host{h10_1, h10_2},
 					Binds: []*BindConfig{
-						&BindConfig{
+						{
 							Hosts: []*Host{h10_1, h10_2},
 						},
 					},
@@ -113,7 +113,7 @@ func TestBuildFrontend(t *testing.T) {
 					Timeout: timeout10,
 					Hosts:   []*Host{h10_1, h10_2},
 					Binds: []*BindConfig{
-						&BindConfig{
+						{
 							Hosts: []*Host{h10_1, h10_2},
 						},
 					},
@@ -123,7 +123,7 @@ func TestBuildFrontend(t *testing.T) {
 					Timeout: timeout20,
 					Hosts:   []*Host{h20_1},
 					Binds: []*BindConfig{
-						&BindConfig{
+						{
 							Hosts: []*Host{h20_1},
 						},
 					},
@@ -139,15 +139,15 @@ func TestBuildFrontend(t *testing.T) {
 					Timeout: timeout10,
 					Hosts:   []*Host{h10CA1_1, h10CA2_1, h10CA2_2},
 					Binds: []*BindConfig{
-						&BindConfig{
+						{
 							Hosts: []*Host{h10CA1_1},
 							TLS:   BindTLSConfig{CAHash: "1"},
 						},
-						&BindConfig{
+						{
 							Hosts: []*Host{h10CA2_1, h10CA2_2},
 							TLS:   BindTLSConfig{CAHash: "2"},
 						},
-						&BindConfig{},
+						{},
 					},
 				},
 			},
@@ -161,10 +161,10 @@ func TestBuildFrontend(t *testing.T) {
 					Timeout: timeout10,
 					Hosts:   []*Host{h10_1, h10_2, h10CA2_1, h10CA2_2},
 					Binds: []*BindConfig{
-						&BindConfig{
+						{
 							Hosts: []*Host{h10_1, h10_2},
 						},
-						&BindConfig{
+						{
 							Hosts: []*Host{h10CA2_1, h10CA2_2},
 							TLS:   BindTLSConfig{CAHash: "2"},
 						},

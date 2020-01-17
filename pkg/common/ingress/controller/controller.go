@@ -781,6 +781,7 @@ func (ctx *backendContext) copyBackendAnnotations(backend *ingress.Backend) {
 		backend.SessionAffinity.CookieSessionAffinity.Strategy = ctx.affinity.CookieConfig.Strategy
 		backend.SessionAffinity.CookieSessionAffinity.Hash = ctx.affinity.CookieConfig.Hash
 		backend.SessionAffinity.CookieSessionAffinity.Dynamic = ctx.affinity.CookieConfig.Dynamic
+		backend.SessionAffinity.CookieSessionAffinity.SameSite = ctx.affinity.CookieConfig.SameSite
 	}
 
 	if backend.BalanceAlgorithm == "" {

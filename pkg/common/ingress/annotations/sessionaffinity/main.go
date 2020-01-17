@@ -42,11 +42,15 @@ const (
 	// This indicates whether or not dynamic cookies will be generated for each host
 	annotationAffinityCookieDynamic = "ingress.kubernetes.io/session-cookie-dynamic"
 	defaultAffinityCookieDynamic    = true
+	// If set to one of the supported values this will indicate the
+	annotationAffinityCookieSameSite = "ingress.kubernetes.io/session-cookie-samesite"
+	defaultAffinityCookieSameSite    = ""
 )
 
 var (
 	affinityCookieHashRegex     = regexp.MustCompile(`^(index|md5|sha1)$`)
 	affinityCookieStrategyRegex = regexp.MustCompile(`^(insert|prefix|rewrite)$`)
+	affinityCookieSameSiteRegex = regexp.MustCompile(`^(none|strict|lax)$`)
 )
 
 // AffinityConfig describes the per ingress session affinity config
@@ -66,6 +70,8 @@ type CookieConfig struct {
 	Hash string `json:"hash"`
 	// Indicates whether or not dynamic cookies will be generated.
 	Dynamic bool `json:"dynamic"`
+	// The value for SameSite attribute of the session affinity cookie
+	SameSite string `json:"samesite"`
 }
 
 // CookieAffinityParse gets the annotation values related to Cookie Affinity
@@ -104,11 +110,19 @@ func CookieAffinityParse(ing *extensions.Ingress) *CookieConfig {
 		sd = defaultAffinityCookieDynamic
 	}
 
+	sss, err := parser.GetStringAnnotation(annotationAffinityCookieSameSite, ing)
+
+	if err != nil || !affinityCookieSameSiteRegex.MatchString(sss) {
+		glog.V(3).Infof("Invalid or no annotation value found in Ingress %v: %v. Setting it to default %v", ing.Name, annotationAffinityCookieSameSite, defaultAffinityCookieSameSite)
+		sss = defaultAffinityCookieSameSite
+	}
+
 	return &CookieConfig{
 		Name:     sn,
 		Strategy: ss,
 		Hash:     sh,
 		Dynamic:  sd,
+		SameSite: sss,
 	}
 }
 

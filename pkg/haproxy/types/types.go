@@ -538,6 +538,7 @@ type Cookie struct {
 	Dynamic  bool
 	Shared   bool
 	Strategy string
+	SameSite string
 }
 
 // Cors ...

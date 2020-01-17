@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	useResolverAnn  = "ingress.kubernetes.io/use-resolver"
+	useResolverAnn = "ingress.kubernetes.io/use-resolver"
 )
 
 type dnsresolvers struct {
@@ -32,8 +32,8 @@ type dnsresolvers struct {
 
 // Resolver information
 type DNSResolver struct {
-	Name                string
-	Nameservers         map[string]string
+	Name        string
+	Nameservers map[string]string
 }
 
 // NewParser creates a new dns-resolvers annotation parser
