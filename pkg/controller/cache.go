@@ -165,3 +165,7 @@ func (c *cache) GetSecretContent(defaultNamespace, secretName, keyName string) (
 	}
 	return data, nil
 }
+
+func (c *cache) GetNodeByName(nodeName string) (*api.Node, error) {
+	return c.listers.Node.GetByName(nodeName)
+}

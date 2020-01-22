@@ -274,7 +274,8 @@ func (c *converter) addEndpoints(svc *api.Service, svcPort *api.ServicePort, bac
 		return err
 	}
 	for _, addr := range ready {
-		backend.AcquireEndpoint(addr.IP, addr.Port, addr.TargetRef)
+		ep := backend.AcquireEndpoint(addr.IP, addr.Port, addr.TargetRef)
+		ep.Weight = addr.Weight
 	}
 	if c.globalConfig.Get(ingtypes.GlobalDrainSupport).Bool() {
 		for _, addr := range notReady {

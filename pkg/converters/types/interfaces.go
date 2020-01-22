@@ -30,6 +30,7 @@ type Cache interface {
 	GetCASecretPath(defaultNamespace, secretName string) (File, error)
 	GetDHSecretPath(defaultNamespace, secretName string) (File, error)
 	GetSecretContent(defaultNamespace, secretName, keyName string) ([]byte, error)
+	GetNodeByName(nodeName string) (*api.Node, error)
 }
 
 // File ...

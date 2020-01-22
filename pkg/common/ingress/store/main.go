@@ -68,7 +68,7 @@ type ServiceLister struct {
 	cache.Store
 }
 
-// GetByName searches for a service in the local secrets Store
+// GetByName searches for a service in the local services Store
 func (sl *ServiceLister) GetByName(name string) (*apiv1.Service, error) {
 	s, exists, err := sl.GetByKey(name)
 	if err != nil {
@@ -83,6 +83,18 @@ func (sl *ServiceLister) GetByName(name string) (*apiv1.Service, error) {
 // NodeLister makes a Store that lists Nodes.
 type NodeLister struct {
 	cache.Store
+}
+
+// GetByName searches for a node in the local nodes Store
+func (nl *NodeLister) GetByName(name string) (*apiv1.Node, error) {
+	n, exists, err := nl.GetByKey(name)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, fmt.Errorf("node %v was not found", name)
+	}
+	return n.(*apiv1.Node), nil
 }
 
 // EndpointLister makes a Store that lists Endpoints.

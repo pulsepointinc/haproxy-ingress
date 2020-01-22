@@ -255,7 +255,7 @@ func (ic GenericController) GetSecret(name string) (*apiv1.Secret, error) {
 	return ic.listers.Secret.GetByName(name)
 }
 
-// GetService searches for a service in the local secrets Store
+// GetService searches for a service in the local services Store
 func (ic GenericController) GetService(name string) (*apiv1.Service, error) {
 	return ic.listers.Service.GetByName(name)
 }

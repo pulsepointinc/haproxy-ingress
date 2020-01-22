@@ -39,6 +39,7 @@ type CacheMock struct {
 	SecretCAPath  map[string]string
 	SecretDHPath  map[string]string
 	SecretContent SecretContent
+	NodeList      map[string]*api.Node
 }
 
 // NewCacheMock ...
@@ -50,6 +51,7 @@ func NewCacheMock() *CacheMock {
 		SecretTLSPath: map[string]string{
 			"system/ingress-default": "/tls/tls-default.pem",
 		},
+		NodeList: map[string]*api.Node{},
 	}
 }
 
@@ -145,4 +147,12 @@ func (c *CacheMock) GetSecretContent(defaultNamespace, secretName, keyName strin
 		return nil, fmt.Errorf("secret '%s' does not have file/key '%s'", fullname, keyName)
 	}
 	return nil, fmt.Errorf("secret not found: '%s'", fullname)
+}
+
+func (c *CacheMock) GetNodeByName(nodeName string) (*api.Node, error) {
+	if node, found := c.NodeList[nodeName]; found {
+		return node, nil
+	}
+
+	return nil, fmt.Errorf("node not found: '%s'", nodeName)
 }
