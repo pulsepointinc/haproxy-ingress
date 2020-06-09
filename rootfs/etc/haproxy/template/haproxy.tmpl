@@ -430,6 +430,7 @@ backend {{ $backend.ID }}
         {{- if $cookie.Shared }}
             {{- range $hostname := $backend.Hostnames }} domain {{ $hostname }}{{ end }}
         {{- end }}
+        {{- if $cookie.SameSite }} samesite {{ $cookie.SameSite }}{{ end }}
         {{- if $cookie.Dynamic }} dynamic{{ end }}
 {{- if $cookie.Dynamic }}
     dynamic-cookie-key "{{ $global.Cookie.Key }}"

@@ -229,7 +229,7 @@ func (c *converter) addBackend(source *annotations.Source, hostpath, fullSvcName
 	ssvcName := strings.Split(fullSvcName, "/")
 	namespace := ssvcName[0]
 	svcName := ssvcName[1]
-	if svcPort == "" {
+	if svcPort == "" && len(svc.Spec.Ports) > 0 {
 		// if the port wasn't specified, take the first one
 		// from the api.Service object
 		svcPort = svc.Spec.Ports[0].TargetPort.String()
@@ -300,7 +300,8 @@ func (c *converter) addEndpoints(svc *api.Service, svcPort *api.ServicePort, bac
 		return err
 	}
 	for _, addr := range ready {
-		backend.AcquireEndpoint(addr.IP, addr.Port, addr.TargetRef)
+		ep := backend.AcquireEndpoint(addr.IP, addr.Port, addr.TargetRef)
+		ep.Weight = addr.Weight
 	}
 	if c.globalConfig.Get(ingtypes.GlobalDrainSupport).Bool() {
 		for _, addr := range notReady {

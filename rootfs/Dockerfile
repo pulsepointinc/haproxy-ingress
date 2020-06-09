@@ -12,16 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM haproxy:1.9.15-alpine
-RUN apk --no-cache add socat openssl lua5.3 lua-socket dumb-init
+FROM registry.pulsepoint.com/haproxy:v1.9_pp
+
+RUN apt-get update \
+     && apt-get install -y --no-install-recommends \
+     && apt install -y socat lua5.3 lua-socket dumb-init \
+     && rm -rf /var/lib/apt/lists/*
 
 COPY . /
 
-RUN addgroup -g 1001 haproxy\
- && adduser -u 1001 -G haproxy -D -s /bin/false haproxy\
- && mkdir -p /var/empty /var/lib/haproxy /etc/haproxy/maps /ingress-controller\
- && chown -R haproxy:haproxy /run /var/lib/haproxy /etc/haproxy /ingress-controller\
- && chmod 0 /var/empty
+RUN addgroup --gid 1001 haproxy \
+     && adduser --uid 1001 --gid 1001 --disabled-password --no-create-home --shell /bin/false haproxy \
+     && mkdir -p /var/empty /var/lib/haproxy /etc/haproxy/maps /ingress-controller \
+     && chown -R haproxy:haproxy /run /var/lib/haproxy /etc/haproxy /ingress-controller \
+     && chmod 0 /var/empty
+
 
 STOPSIGNAL SIGTERM
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/start.sh"]

@@ -17,8 +17,8 @@ limitations under the License.
 package status
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"net"
 	"os"
 	"sort"

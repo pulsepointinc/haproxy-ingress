@@ -18,12 +18,19 @@ package utils
 
 import (
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/jcmoraisjr/haproxy-ingress/pkg/common/ingress/annotations/parser"
 	"net"
 	"strconv"
 
 	api "k8s.io/api/core/v1"
 
 	"github.com/jcmoraisjr/haproxy-ingress/pkg/converters/types"
+)
+
+const (
+	defaultServerWeight  = 1
+	nodeWeightAnnotation = "ingress.kubernetes.io/node-weight"
 )
 
 // FindServicePort ...
@@ -71,6 +78,8 @@ type Endpoint struct {
 	IP        string
 	Port      int
 	TargetRef string
+	NodeName  *string
+	Weight    int
 }
 
 // CreateEndpoints ...
@@ -88,7 +97,9 @@ func CreateEndpoints(cache types.Cache, svc *api.Service, svcPort *api.ServicePo
 			if matchPort(svcPort, &epPort) {
 				port := int(epPort.Port)
 				for _, addr := range subset.Addresses {
-					ready = append(ready, newEndpointAddr(&addr, port))
+					endpointAddr := newEndpointAddr(&addr, port)
+					endpointAddr.Weight = getNodeWeight(cache, endpointAddr.NodeName)
+					ready = append(ready, endpointAddr)
 				}
 				for _, addr := range subset.NotReadyAddresses {
 					notReady = append(notReady, newEndpointAddr(&addr, port))
@@ -97,6 +108,33 @@ func CreateEndpoints(cache types.Cache, svc *api.Service, svcPort *api.ServicePo
 		}
 	}
 	return ready, notReady, nil
+}
+
+func getNodeWeight(cache types.Cache, nodeName *string) int {
+
+	if nodeName == nil {
+		glog.Warning("Searching for weight of node without providing the node name")
+		return defaultServerWeight
+	}
+	glog.V(4).Infof("Searching for weight of node %v", nodeName)
+
+	node, e := cache.GetNodeByName(*nodeName)
+	if e != nil {
+		glog.Warningf("Unable to get weight for node %v, error: %v", nodeName, e)
+		return defaultServerWeight
+	}
+	weight, e := parser.GetIntNodeAnnotation(nodeWeightAnnotation, node)
+	if e != nil {
+		glog.Warningf("Unable to get weight annotation %s for node %v, error: %v", nodeWeightAnnotation, nodeName, e)
+		return defaultServerWeight
+	}
+	if weight < 1 || weight > 127 {
+		glog.Warningf("Invalid node weight %v for node %v", weight, nodeName)
+		return defaultServerWeight
+	}
+
+	glog.V(4).Infof("Found weight of node %v: %v", nodeName, weight)
+	return weight
 }
 
 func matchPort(svcPort *api.ServicePort, epPort *api.EndpointPort) bool {
@@ -139,6 +177,8 @@ func newEndpointAddr(addr *api.EndpointAddress, port int) *Endpoint {
 		IP:        addr.IP,
 		Port:      port,
 		TargetRef: targetRefToString(addr.TargetRef),
+		NodeName:  addr.NodeName,
+		Weight:    defaultServerWeight,
 	}
 }
 
@@ -151,8 +191,9 @@ func targetRefToString(targetRef *api.ObjectReference) string {
 
 func newEndpointIP(ip string, port int) *Endpoint {
 	return &Endpoint{
-		IP:   ip,
-		Port: port,
+		IP:     ip,
+		Port:   port,
+		Weight: defaultServerWeight,
 	}
 }
 

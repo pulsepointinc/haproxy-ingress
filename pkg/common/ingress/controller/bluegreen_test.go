@@ -43,7 +43,7 @@ func TestWeightBalance(t *testing.T) {
 		Store: s,
 	}
 	testUpstreams := map[string]*ingress.Backend{
-		"b00-00": &ingress.Backend{},
+		"b00-00": {},
 		"b01-01": buildBackend("v=1=50,v=2=50", "pod0101-01,pod0102-01", "deploy"),
 		"b01-02": buildBackend("v=1=50,v=2=25", "pod0101-01,pod0102-01", "deploy"),
 		"b01-03": buildBackend("v=1=50,v=2=25", "pod0101-01,pod0102-01/d", "deploy"),

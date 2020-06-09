@@ -17,11 +17,11 @@ limitations under the License.
 package parser
 
 import (
+	"k8s.io/api/core/v1"
 	"strconv"
 
-	extensions "k8s.io/api/extensions/v1beta1"
-
 	"github.com/jcmoraisjr/haproxy-ingress/pkg/common/ingress/errors"
+	extensions "k8s.io/api/extensions/v1beta1"
 )
 
 // IngressAnnotation has a method to parse annotations located in Ingress
@@ -29,9 +29,9 @@ type IngressAnnotation interface {
 	Parse(ing *extensions.Ingress) (interface{}, error)
 }
 
-type ingAnnotations map[string]string
+type metaAnnotations map[string]string
 
-func (a ingAnnotations) parseBool(name string) (bool, error) {
+func (a metaAnnotations) parseBool(name string) (bool, error) {
 	val, ok := a[name]
 	if ok {
 		b, err := strconv.ParseBool(val)
@@ -43,7 +43,7 @@ func (a ingAnnotations) parseBool(name string) (bool, error) {
 	return false, errors.ErrMissingAnnotations
 }
 
-func (a ingAnnotations) parseString(name string) (string, error) {
+func (a metaAnnotations) parseString(name string) (string, error) {
 	val, ok := a[name]
 	if ok {
 		return val, nil
@@ -51,7 +51,7 @@ func (a ingAnnotations) parseString(name string) (string, error) {
 	return "", errors.ErrMissingAnnotations
 }
 
-func (a ingAnnotations) parseInt(name string) (int, error) {
+func (a metaAnnotations) parseInt(name string) (int, error) {
 	val, ok := a[name]
 	if ok {
 		i, err := strconv.Atoi(val)
@@ -80,7 +80,7 @@ func GetBoolAnnotation(name string, ing *extensions.Ingress) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return ingAnnotations(ing.GetAnnotations()).parseBool(name)
+	return metaAnnotations(ing.GetAnnotations()).parseBool(name)
 }
 
 // GetStringAnnotation extracts a string from an Ingress annotation
@@ -89,7 +89,7 @@ func GetStringAnnotation(name string, ing *extensions.Ingress) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return ingAnnotations(ing.GetAnnotations()).parseString(name)
+	return metaAnnotations(ing.GetAnnotations()).parseString(name)
 }
 
 // GetIntAnnotation extracts an int from an Ingress annotation
@@ -98,5 +98,16 @@ func GetIntAnnotation(name string, ing *extensions.Ingress) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	return ingAnnotations(ing.GetAnnotations()).parseInt(name)
+	return metaAnnotations(ing.GetAnnotations()).parseInt(name)
+}
+
+// GetIntNodeAnnotation extracts an int from an Ingress annotation
+func GetIntNodeAnnotation(name string, node *v1.Node) (int, error) {
+	if node == nil || len(node.GetAnnotations()) == 0 {
+		return 0, errors.ErrMissingAnnotations
+	}
+	if name == "" {
+		return 0, errors.ErrInvalidAnnotationName
+	}
+	return metaAnnotations(node.GetAnnotations()).parseInt(name)
 }

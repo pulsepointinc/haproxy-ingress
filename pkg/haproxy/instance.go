@@ -258,6 +258,7 @@ func (i *instance) haproxyUpdate(timer *utils.Timer) {
 		timer.Tick("writeTmpl")
 		if err != nil {
 			i.logger.Error("error writing configuration: %v", err)
+			i.logger.Error("%v", i.curConfig)
 			i.clearConfig()
 			return
 		}

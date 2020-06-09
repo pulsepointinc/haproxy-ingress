@@ -243,6 +243,7 @@ type CookieSessionAffinity struct {
 	Hash      string              `json:"hash"`
 	Dynamic   bool                `json:"dynamic"`
 	Locations map[string][]string `json:"locations,omitempty"`
+	SameSite  string              `json:"samesite,omitempty"`
 }
 
 // Endpoint describes a kubernetes endpoint in a backend

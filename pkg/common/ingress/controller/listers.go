@@ -212,6 +212,16 @@ func (ic *GenericController) createListers(disableNodeLister bool) (*ingress.Sto
 		},
 	}
 
+	nodeEventHandler := cache.ResourceEventHandlerFuncs{
+		UpdateFunc: func(old, cur interface{}) {
+			oep := old.(*apiv1.Node)
+			ocur := cur.(*apiv1.Node)
+			if !reflect.DeepEqual(ocur.Annotations, oep.Annotations) {
+				ic.syncQueue.Enqueue(cur)
+			}
+		},
+	}
+
 	watchNs := apiv1.NamespaceAll
 	if ic.cfg.ForceNamespaceIsolation && ic.cfg.Namespace != apiv1.NamespaceAll {
 		watchNs = ic.cfg.Namespace
@@ -255,7 +265,7 @@ func (ic *GenericController) createListers(disableNodeLister bool) (*ingress.Sto
 	}
 	lister.Node.Store, controller.Node = cache.NewInformer(
 		nodeListerWatcher,
-		&apiv1.Node{}, ic.cfg.ResyncPeriod, cache.ResourceEventHandlerFuncs{})
+		&apiv1.Node{}, ic.cfg.ResyncPeriod, nodeEventHandler)
 
 	return lister, controller
 }

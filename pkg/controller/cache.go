@@ -336,3 +336,7 @@ func (c *cache) SetToken(domain string, uri, token string) error {
 	}
 	return c.listers.ConfigMap.CreateOrUpdate(config)
 }
+
+func (c *cache) GetNodeByName(nodeName string) (*api.Node, error) {
+	return c.listers.Node.GetByName(nodeName)
+}

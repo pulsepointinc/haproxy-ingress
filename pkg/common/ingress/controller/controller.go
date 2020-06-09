@@ -264,7 +264,7 @@ func (ic GenericController) GetSecret(name string) (*apiv1.Secret, error) {
 	return ic.listers.Secret.GetByName(name)
 }
 
-// GetService searches for a service in the local secrets Store
+// GetService searches for a service in the local services Store
 func (ic GenericController) GetService(name string) (*apiv1.Service, error) {
 	return ic.listers.Service.GetByName(name)
 }
@@ -790,6 +790,7 @@ func (ctx *backendContext) copyBackendAnnotations(backend *ingress.Backend) {
 		backend.SessionAffinity.CookieSessionAffinity.Strategy = ctx.affinity.CookieConfig.Strategy
 		backend.SessionAffinity.CookieSessionAffinity.Hash = ctx.affinity.CookieConfig.Hash
 		backend.SessionAffinity.CookieSessionAffinity.Dynamic = ctx.affinity.CookieConfig.Dynamic
+		backend.SessionAffinity.CookieSessionAffinity.SameSite = ctx.affinity.CookieConfig.SameSite
 	}
 
 	if backend.BalanceAlgorithm == "" {
