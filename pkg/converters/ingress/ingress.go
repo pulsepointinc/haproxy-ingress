@@ -818,7 +818,10 @@ func (c *converter) addBackendWithClass(source *annotations.Source, pathLink hat
 		}
 		if mapper.Get(ingtypes.BackServiceUpstream).Bool() {
 			if addr, err := convutils.CreateSvcEndpoint(svc, port); err == nil {
-				backend.AcquireEndpoint(addr.IP, addr.Port, addr.TargetRef)
+				ep := backend.AcquireEndpoint(addr.IP, addr.Port, addr.TargetRef)
+				if addr.Weight > 0 {
+					ep.Weight = addr.Weight
+				}
 			} else {
 				c.logger.Error("error adding IP of service '%s': %v", fullSvcName, err)
 			}
@@ -936,7 +939,10 @@ func (c *converter) addEndpoints(svc *api.Service, svcPort *api.ServicePort, bac
 		return err
 	}
 	for _, addr := range ready {
-		backend.AcquireEndpoint(addr.IP, addr.Port, addr.TargetRef)
+		ep := backend.AcquireEndpoint(addr.IP, addr.Port, addr.TargetRef)
+		if addr.Weight > 0 {
+			ep.Weight = addr.Weight
+		}
 	}
 	if c.globalConfig.Get(ingtypes.GlobalDrainSupport).Bool() {
 		for _, addr := range notReady {

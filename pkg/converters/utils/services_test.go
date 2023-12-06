@@ -74,8 +74,8 @@ func TestCreateEndpoints(t *testing.T) {
 			declarePort: "svcport:8080:http",
 			findPort:    "8080",
 			expected: []*Endpoint{
-				{IP: "172.17.0.11", Port: 8080, Target: "172.17.0.11:8080"},
-				{IP: "172.17.0.12", Port: 8080, Target: "172.17.0.12:8080"},
+				{IP: "172.17.0.11", Port: 8080, Target: "172.17.0.11:8080", Weight: defaultServerWeight},
+				{IP: "172.17.0.12", Port: 8080, Target: "172.17.0.12:8080", Weight: defaultServerWeight},
 			},
 		},
 		// 1
@@ -84,7 +84,7 @@ func TestCreateEndpoints(t *testing.T) {
 			declarePort: "svcport:8080:http",
 			findPort:    "svcport",
 			expected: []*Endpoint{
-				{IP: "172.17.0.11", Port: 8080, Target: "172.17.0.11:8080"},
+				{IP: "172.17.0.11", Port: 8080, Target: "172.17.0.11:8080", Weight: defaultServerWeight},
 			},
 		},
 		// 2
@@ -93,7 +93,7 @@ func TestCreateEndpoints(t *testing.T) {
 			declarePort: "svcport:8000:http",
 			findPort:    "http",
 			expected: []*Endpoint{
-				{IP: "172.17.0.12", Port: 8000, Target: "172.17.0.12:8000"},
+				{IP: "172.17.0.12", Port: 8000, Target: "172.17.0.12:8000", Weight: defaultServerWeight},
 			},
 		},
 	}
