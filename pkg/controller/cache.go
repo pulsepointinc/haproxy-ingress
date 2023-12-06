@@ -1171,3 +1171,7 @@ func (c *k8scache) SwapChangedObjects() *convtypes.ChangedObjects {
 	c.clear = true
 	return &ch
 }
+
+func (c *k8scache) GetNodeByName(nodeName string) (*api.Node, error) {
+	return c.listers.nodeLister.Get(nodeName)
+}

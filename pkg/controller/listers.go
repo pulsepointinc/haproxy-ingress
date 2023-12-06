@@ -84,6 +84,7 @@ type listers struct {
 	secretLister         listerscore.SecretLister
 	configMapLister      listerscore.ConfigMapLister
 	podLister            listerscore.PodLister
+	nodeLister           listerscore.NodeLister
 	//
 	ingressInformer        cache.SharedInformer
 	ingressClassInformer   cache.SharedInformer
@@ -99,6 +100,7 @@ type listers struct {
 	secretInformer         cache.SharedInformer
 	configMapInformer      cache.SharedInformer
 	podInformer            cache.SharedInformer
+	nodeInformer           cache.SharedInformer
 }
 
 func createListers(
@@ -152,7 +154,7 @@ func createListers(
 	} else {
 		l.createPodLister(localInformer.Core().V1().Pods())
 	}
-
+	l.createNodeLister(resourceInformer.Core().V1().Nodes())
 	if watchGateway {
 		if hasGatewayAPI(client.GatewayAPIV1alpha1().Discovery(), gatewayv1alpha1.GroupVersion, "gatewayclass", "gateway", "httproute") {
 			var option gwapiinformersnetworking.SharedInformerOption
@@ -684,6 +686,23 @@ func (l *listers) createPodLister(informer informerscore.PodInformer) {
 			oldPod := old.(*api.Pod)
 			curPod := cur.(*api.Pod)
 			if oldPod.DeletionTimestamp != curPod.DeletionTimestamp {
+				l.events.Notify(old, cur)
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			l.events.Notify(obj, nil)
+		},
+	})
+}
+
+func (l *listers) createNodeLister(informer informerscore.NodeInformer) {
+	l.nodeLister = informer.Lister()
+	l.nodeInformer = informer.Informer()
+	l.nodeInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		UpdateFunc: func(old, cur interface{}) {
+			oldNode := old.(*api.Node)
+			curNode := cur.(*api.Node)
+			if oldNode.DeletionTimestamp != curNode.DeletionTimestamp {
 				l.events.Notify(old, cur)
 			}
 		},

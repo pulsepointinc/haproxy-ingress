@@ -53,6 +53,7 @@ type Cache interface {
 	GetDHSecretPath(defaultNamespace, secretName string) (File, error)
 	GetPasswdSecretContent(defaultNamespace, secretName string, track []TrackingRef) ([]byte, error)
 	SwapChangedObjects() *ChangedObjects
+	GetNodeByName(nodeName string) (*api.Node, error)
 }
 
 // ChangedObjects ...
