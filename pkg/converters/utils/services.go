@@ -24,7 +24,14 @@ import (
 	api "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 
+	"k8s.io/klog/v2"
+
 	"github.com/jcmoraisjr/haproxy-ingress/pkg/converters/types"
+)
+
+const (
+	defaultServerWeight  = 50
+	nodeWeightAnnotation = "ingress.kubernetes.io/node-weight"
 )
 
 // FindServicePort ...
@@ -73,15 +80,20 @@ type Endpoint struct {
 	Port      int
 	Target    string
 	TargetRef string
+	NodeName  *string
+	Weight    int
 }
 
-func createEndpoints(endpoints *api.Endpoints, svcPort *api.ServicePort) (ready, notReady []*Endpoint, err error) {
+func createEndpoints(cache types.Cache, endpoints *api.Endpoints, svcPort *api.ServicePort) (ready, notReady []*Endpoint, err error) {
 	for _, subset := range endpoints.Subsets {
 		for _, epPort := range subset.Ports {
 			if matchPort(svcPort, &epPort) {
 				port := int(epPort.Port)
 				for _, addr := range subset.Addresses {
-					ready = append(ready, newEndpoint(addr.IP, port, addr.TargetRef))
+					endpoint := newEndpoint(addr.IP, port, addr.TargetRef)
+					endpoint.NodeName = addr.NodeName
+					endpoint.Weight = getNodeWeight(cache, addr.NodeName)
+					ready = append(ready, endpoint)
 				}
 				for _, addr := range subset.NotReadyAddresses {
 					notReady = append(notReady, newEndpoint(addr.IP, port, addr.TargetRef))
@@ -92,7 +104,7 @@ func createEndpoints(endpoints *api.Endpoints, svcPort *api.ServicePort) (ready,
 	return ready, notReady, nil
 }
 
-func createEndpointSlices(endpointSlices []*discoveryv1.EndpointSlice, svcPort *api.ServicePort) (ready, notReady []*Endpoint, err error) {
+func createEndpointSlices(cache types.Cache, endpointSlices []*discoveryv1.EndpointSlice, svcPort *api.ServicePort) (ready, notReady []*Endpoint, err error) {
 	for _, endpointSlice := range endpointSlices {
 		for _, epPort := range endpointSlice.Ports {
 			// A pod corresponding to an endpoint slice can expose multiple ports.
@@ -122,6 +134,8 @@ func createEndpointSlices(endpointSlices []*discoveryv1.EndpointSlice, svcPort *
 				// Using that as an argument to justify why we are using first
 				// address here.
 				domainEndpoint := newEndpoint(endpoint.Addresses[0], int(*epPort.Port), endpoint.TargetRef)
+				domainEndpoint.NodeName = endpoint.NodeName
+				domainEndpoint.Weight = getNodeWeight(cache, endpoint.NodeName)
 
 				// From the API docs of EndpointConditions:
 				//
@@ -154,13 +168,13 @@ func CreateEndpoints(cache types.Cache, svc *api.Service, svcPort *api.ServicePo
 		if err1 != nil {
 			return nil, nil, err1
 		}
-		ready, notReady, err = createEndpointSlices(endpoints, svcPort)
+		ready, notReady, err = createEndpointSlices(cache, endpoints, svcPort)
 	default:
 		endpoints, err1 := cache.GetEndpoints(svc)
 		if err1 != nil {
 			return nil, nil, err1
 		}
-		ready, notReady, err = createEndpoints(endpoints, svcPort)
+		ready, notReady, err = createEndpoints(cache, endpoints, svcPort)
 	}
 	// ensures predictable result, allowing to compare old and new states
 	sort.Slice(ready, func(i, j int) bool {
@@ -220,4 +234,34 @@ func newEndpoint(ip string, port int, targetRef *api.ObjectReference) *Endpoint 
 
 func (e *Endpoint) String() string {
 	return fmt.Sprintf("%+v", *e)
+}
+
+func getNodeWeight(cache types.Cache, nodeName *string) int {
+	if nodeName == nil {
+		klog.Warning("Searching for weight of node without providing the node name")
+		return defaultServerWeight
+	}
+	klog.V(4).Infof("Searching for weight of node %v", *nodeName)
+
+	node, e := cache.GetNodeByName(*nodeName)
+	if e != nil {
+		klog.Warningf("Unable to get weight for node %v, error: %v", *nodeName, e)
+		return defaultServerWeight
+	}
+
+	weightStr, ok := node.Annotations[nodeWeightAnnotation]
+	if !ok {
+		return defaultServerWeight
+	}
+	weight, e := strconv.Atoi(weightStr)
+	if e != nil {
+		return defaultServerWeight
+	}
+
+	if weight < 1 || weight > 127 {
+		klog.Warningf("Invalid node weight %v for node %v", weight, *nodeName)
+		return defaultServerWeight
+	}
+	klog.V(4).Infof("Found weight of node %v: %v", *nodeName, weight)
+	return weight
 }

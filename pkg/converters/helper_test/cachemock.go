@@ -64,6 +64,7 @@ type CacheMock struct {
 	SecretCRLPath map[string]string
 	SecretDHPath  map[string]string
 	SecretContent SecretContent
+	NodeList      map[string]*api.Node
 }
 
 // NewCacheMock ...
@@ -80,6 +81,7 @@ func NewCacheMock(tracker convtypes.Tracker) *CacheMock {
 		SecretTLSPath: map[string]string{
 			"system/ingress-default": "/tls/tls-default.pem",
 		},
+		NodeList: map[string]*api.Node{},
 	}
 }
 
@@ -389,4 +391,12 @@ func (c *CacheMock) GetEndpointSlices(service *api.Service) ([]*discoveryv1.Endp
 		return ep, nil
 	}
 	return nil, fmt.Errorf("could not find endpointslices for service '%s'", serviceName)
+}
+
+func (c *CacheMock) GetNodeByName(nodeName string) (*api.Node, error) {
+	if node, found := c.NodeList[nodeName]; found {
+		return node, nil
+	}
+
+	return nil, fmt.Errorf("node not found: '%s'", nodeName)
 }

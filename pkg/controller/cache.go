@@ -998,6 +998,49 @@ func (c *k8scache) Notify(old, cur interface{}) {
 			}
 		case *api.Pod:
 			ch.PodsNew = append(ch.PodsNew, cur)
+		case *api.Node:
+			ch.NodesUpd = append(ch.NodesUpd, cur)
+			curNode := cur
+			// a node change should not trigger a full sync; instead
+			// 1. all pods on the changed node should be considered as modified
+			// 2. all services that match said pods should be considered modified
+
+			// iterate over all known pods in indexer
+			// instead of doing a c.client.CoreV1().Pods("").List(metav1.ListOptions{FieldSelector: "spec.nodeName=" + curNode.Name,})
+			pods, pod_err := c.listers.podLister.List(labels.Everything())
+			if pod_err != nil {
+				c.logger.Warn("Error listing pods on node change: %v", pod_err)
+				return
+			}
+			for _, pod := range pods {
+				if pod.Spec.NodeName == curNode.Name {
+					ch.PodsNew = append(ch.PodsNew, pod)
+				}
+			}
+			// now that we have a list of changed pods; let's find all services that reference them in the same manner
+			svcs, svcs_err := c.listers.serviceLister.Services("").List(labels.Everything())
+			if svcs_err != nil {
+				c.logger.Warn("Error listing services on node change: %v", svcs_err)
+				return
+			}
+
+			changed_services := make(map[*api.Service]bool)
+			for _, svc := range svcs {
+				svc_selector, svc_selector_err := buildLabelSelector(svc.Spec.Selector)
+				if svc_selector_err != nil {
+					c.logger.Warn("Error creating service label selector on node change: %v", svc_selector_err)
+					return
+				}
+				for _, pod := range ch.PodsNew {
+					if svc_selector.Matches(labels.Set(pod.Labels)) {
+						changed_services[svc] = true
+					}
+				}
+			}
+			for svc := range changed_services {
+				ch.ServicesUpd = append(ch.ServicesUpd, svc)
+			}
+
 		case cache.DeletedFinalStateUnknown:
 			ch.NeedFullSync = true
 		}
@@ -1149,6 +1192,9 @@ func (c *k8scache) SwapChangedObjects() *convtypes.ChangedObjects {
 	for _, pod := range ch.PodsNew {
 		addChanges(convtypes.ResourcePod, eventUpdate, pod.Namespace, pod.Name)
 	}
+	for _, node := range ch.NodesUpd {
+		addChanges(convtypes.ResourceNode, eventUpdate, "", node.Name)
+	}
 	ch.Objects = changedObj
 	ch.Links = changedLinks
 	//
@@ -1170,4 +1216,10 @@ func (c *k8scache) SwapChangedObjects() *convtypes.ChangedObjects {
 	//
 	c.clear = true
 	return &ch
+}
+
+func (c *k8scache) GetNodeByName(nodeName string) (*api.Node, error) {
+	// a reasonable alternative to using the lister:
+	// return c.client.CoreV1().Nodes().Get(c.ctx, nodeName, metav1.GetOptions{})
+	return c.listers.nodeLister.Get(nodeName)
 }
