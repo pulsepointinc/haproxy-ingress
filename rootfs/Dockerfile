@@ -12,20 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM haproxy:2.4.25-alpine
+FROM registry.pulsepoint.com/haproxy:v2.4_ppfp_0.5.0
 
 USER root
 
-RUN apk upgrade --no-cache && apk --no-cache add socat openssl lua5.3 lua-json4 dumb-init
+RUN apt-get update \
+     && apt-get install -y --no-install-recommends \
+     patch \
+     socat lua5.3 lua-json lua-socket dumb-init \
+     && rm -rf /var/lib/apt/lists/*
 
 COPY . /
 
-RUN deluser haproxy\
- && addgroup -g 1001 haproxy\
- && adduser -u 1001 -G haproxy -D -s /bin/false haproxy\
- && mkdir -p /var/empty /etc/haproxy /var/lib/haproxy /var/run/haproxy\
- && chown -R haproxy:haproxy /etc/haproxy /var/lib/haproxy /var/run/haproxy\
- && chmod 0 /var/empty
+RUN addgroup --gid 1001 haproxy \
+     && adduser --uid 1001 --gid 1001 --disabled-password --no-create-home --shell /bin/false haproxy \
+     && mkdir -p /var/empty /var/lib/haproxy /etc/haproxy/maps /var/run/haproxy \
+     && chown -R haproxy:haproxy /run /var/lib/haproxy /etc/haproxy /var/run/haproxy \
+     && chmod 0 /var/empty
 
 STOPSIGNAL SIGTERM
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/start.sh"]

@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.19.13-alpine AS builder
+FROM golang:1.19.13-bullseye AS builder
 
 ARG GIT_TAG
 WORKDIR /src
-RUN apk --no-cache add git
+RUN apt install git
 
 COPY . .
 
@@ -28,18 +28,21 @@ RUN GIT_TAG=${GIT_TAG:-latest}\
     -ldflags "-s -w -X ${VERSION_PKG}.RELEASE=${GIT_TAG} -X ${VERSION_PKG}.COMMIT=${GIT_COMMIT} -X ${VERSION_PKG}.REPO=${GIT_REPO}"\
     -o haproxy-ingress pkg/main.go
 
-FROM haproxy:2.4.25-alpine
+FROM registry.pulsepoint.com/haproxy:v2.4_ppfp_0.5.0
 
 USER root
 
-RUN apk upgrade --no-cache && apk --no-cache add socat openssl lua5.3 lua-json4 dumb-init
+RUN apt-get update \
+     && apt-get install -y --no-install-recommends \
+     patch \
+     socat lua5.3 lua-json lua-socket dumb-init \
+     && rm -rf /var/lib/apt/lists/*
 
 COPY rootfs/ /
 COPY --from=builder /src/haproxy-ingress /haproxy-ingress-controller
 
-RUN deluser haproxy\
- && addgroup -g 1001 haproxy\
- && adduser -u 1001 -G haproxy -D -s /bin/false haproxy\
+RUN addgroup -gid 1001 haproxy\
+ && adduser --uid 1001 --gid 1001 --disabled-password --no-create-home --shell /bin/false haproxy \
  && mkdir -p /var/empty /etc/haproxy /var/lib/haproxy /var/run/haproxy\
  && chown -R haproxy:haproxy /etc/haproxy /var/lib/haproxy /var/run/haproxy\
  && chmod 0 /var/empty
