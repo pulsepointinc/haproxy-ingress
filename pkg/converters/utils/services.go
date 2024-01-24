@@ -241,11 +241,11 @@ func getNodeWeight(cache types.Cache, nodeName *string) int {
 		klog.Warning("Searching for weight of node without providing the node name")
 		return defaultServerWeight
 	}
-	klog.V(4).Infof("Searching for weight of node %v", nodeName)
+	klog.V(4).Infof("Searching for weight of node %v", *nodeName)
 
 	node, e := cache.GetNodeByName(*nodeName)
 	if e != nil {
-		klog.Warningf("Unable to get weight for node %v, error: %v", nodeName, e)
+		klog.Warningf("Unable to get weight for node %v, error: %v", *nodeName, e)
 		return defaultServerWeight
 	}
 

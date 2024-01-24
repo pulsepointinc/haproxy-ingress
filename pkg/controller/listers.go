@@ -259,6 +259,7 @@ func (l *listers) RunAsync(stopCh <-chan struct{}) {
 	go l.secretInformer.Run(stopCh)
 	go l.configMapInformer.Run(stopCh)
 	go l.podInformer.Run(stopCh)
+	go l.nodeInformer.Run(stopCh)
 	var synced bool
 	if l.enableEndpointSlicesAPI {
 		go l.endpointSliceInformer.Run(stopCh)
@@ -699,6 +700,9 @@ func (l *listers) createNodeLister(informer informerscore.NodeInformer) {
 	l.nodeLister = informer.Lister()
 	l.nodeInformer = informer.Informer()
 	l.nodeInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			l.events.Notify(nil, obj)
+		},
 		UpdateFunc: func(old, cur interface{}) {
 			oldNode := old.(*api.Node)
 			curNode := cur.(*api.Node)

@@ -1173,5 +1173,7 @@ func (c *k8scache) SwapChangedObjects() *convtypes.ChangedObjects {
 }
 
 func (c *k8scache) GetNodeByName(nodeName string) (*api.Node, error) {
+	// a reasonable alternative to using the lister:
+	// return c.client.CoreV1().Nodes().Get(c.ctx, nodeName, metav1.GetOptions{})
 	return c.listers.nodeLister.Get(nodeName)
 }
