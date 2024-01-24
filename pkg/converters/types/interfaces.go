@@ -93,6 +93,8 @@ type ChangedObjects struct {
 	//
 	NeedFullSync bool
 	//
+	NodesUpd []*api.Node
+	//
 	Objects []string
 	Links   TrackingLinks
 }
@@ -118,6 +120,7 @@ const (
 	ResourceEndpoints ResourceType = "Endpoints"
 	ResourceSecret    ResourceType = "Secret"
 	ResourcePod       ResourceType = "Pod"
+	ResourceNode      ResourceType = "Node"
 
 	ResourceHATCPService ResourceType = "HATCPService"
 	ResourceHAHostname   ResourceType = "HAHostname"

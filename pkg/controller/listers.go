@@ -706,7 +706,8 @@ func (l *listers) createNodeLister(informer informerscore.NodeInformer) {
 		UpdateFunc: func(old, cur interface{}) {
 			oldNode := old.(*api.Node)
 			curNode := cur.(*api.Node)
-			if oldNode.DeletionTimestamp != curNode.DeletionTimestamp {
+			// for updates we care about deletion OR annotation changes
+			if (oldNode.DeletionTimestamp != curNode.DeletionTimestamp) || !reflect.DeepEqual(oldNode.Annotations, curNode.Annotations) {
 				l.events.Notify(old, cur)
 			}
 		},
