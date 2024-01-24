@@ -30,5 +30,9 @@ RUN addgroup --gid 1001 haproxy \
      && chown -R haproxy:haproxy /run /var/lib/haproxy /etc/haproxy /var/run/haproxy \
      && chmod 0 /var/empty
 
+# TODO it's not a great way to do it as we need to keep haproxy-pp in sync, rework this into using configuration snippets
+# See warning here: https://haproxy-ingress.github.io/docs/configuration/template/
+RUN patch /etc/templates/haproxy/haproxy.tmpl /etc/templates/haproxy/haproxy-pp.patch
+
 STOPSIGNAL SIGTERM
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/start.sh"]
