@@ -1,0 +1,33 @@
+Index: rootfs/etc/templates/haproxy/haproxy.tmpl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/rootfs/etc/templates/haproxy/haproxy.tmpl b/rootfs/etc/templates/haproxy/haproxy.tmpl
+--- a/rootfs/etc/templates/haproxy/haproxy.tmpl	(revision 026b05a1c971079f3c8dfe0d15e09a20cffb88a6)
++++ b/rootfs/etc/templates/haproxy/haproxy.tmpl	(revision ab90136eaa4d0dc5137ea43e99a81014593542b5)
+@@ -155,7 +155,7 @@
+     option redispatch
+ {{- end }}
+     option dontlognull
+-    option http-server-close
++    http-reuse always
+     option http-keep-alive
+ {{- if not $global.UseHTX }}
+     no option http-use-htx
+@@ -317,6 +317,7 @@
+ {{- range $backend := $backendItems }}
+ backend {{ $backend.ID }}
+     mode {{ if $backend.ModeTCP }}tcp{{ else }}http{{ end }}
++    {{ if $backend.ModeTCP }}{{ else }}http-response set-status 204 reason "No Content" if { status -i 400-599 }{{ end }}
+ {{- if $backend.BalanceAlgorithm }}
+     balance {{ $backend.BalanceAlgorithm }}
+ {{- end }}
+@@ -649,6 +650,7 @@
+ {{- /*------------------------------------*/}}
+ {{- if eq $global.ForwardFor "add" }}
+     http-request set-header X-Original-Forwarded-For %[hdr(x-forwarded-for)] if { hdr(x-forwarded-for) -m found }
++    http-request set-header CF-Connecting-IP %[hdr(x-forwarded-for,-2)] if { hdr(x-forwarded-for,-2) -m found } { hdr(CDN-Loop) -m found }
+     http-request del-header x-forwarded-for
+     option forwardfor
+ {{- else if eq $global.ForwardFor "update" }}
