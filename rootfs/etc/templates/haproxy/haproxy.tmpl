@@ -155,7 +155,7 @@ defaults
     option redispatch
 {{- end }}
     option dontlognull
-    option http-server-close
+    http-reuse always
     option http-keep-alive
 {{- if not $global.UseHTX }}
     no option http-use-htx
@@ -317,6 +317,7 @@ listen {{ $proxy_name }}
 {{- range $backend := $backendItems }}
 backend {{ $backend.ID }}
     mode {{ if $backend.ModeTCP }}tcp{{ else }}http{{ end }}
+    {{ if $backend.ModeTCP }}{{ else }}http-response set-status 204 reason "No Content" if { status -i 400-599 }{{ end }}
 {{- if $backend.BalanceAlgorithm }}
     balance {{ $backend.BalanceAlgorithm }}
 {{- end }}
@@ -649,6 +650,7 @@ backend {{ $backend.ID }}
 {{- /*------------------------------------*/}}
 {{- if eq $global.ForwardFor "add" }}
     http-request set-header X-Original-Forwarded-For %[hdr(x-forwarded-for)] if { hdr(x-forwarded-for) -m found }
+    http-request set-header CF-Connecting-IP %[hdr(x-forwarded-for,-2)] if { hdr(x-forwarded-for,-2) -m found } { hdr(CDN-Loop) -m found }
     http-request del-header x-forwarded-for
     option forwardfor
 {{- else if eq $global.ForwardFor "update" }}
