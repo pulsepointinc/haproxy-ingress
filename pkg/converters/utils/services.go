@@ -259,10 +259,9 @@ func getNodeWeight(cache types.Cache, nodeName *string) int {
 	}
 
 	if weight < 1 || weight > 127 {
-		klog.Warningf("Invalid node weight %v for node %v", weight, nodeName)
+		klog.Warningf("Invalid node weight %v for node %v", weight, *nodeName)
 		return defaultServerWeight
 	}
-	fmt.Printf("Found weight of node %v: %v", nodeName, weight)
-	klog.V(4).Infof("Found weight of node %v: %v", nodeName, weight)
+	klog.V(4).Infof("Found weight of node %v: %v", *nodeName, weight)
 	return weight
 }
