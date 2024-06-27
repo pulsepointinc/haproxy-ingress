@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM registry.pulsepoint.com/haproxy:v2.4_ppfp_0.6.0
+FROM registry.pulsepoint.com/haproxy:v2.4_ppfp_0.6.1
 
 USER root
 

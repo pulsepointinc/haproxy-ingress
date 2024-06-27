@@ -28,7 +28,7 @@ RUN GIT_TAG=${GIT_TAG:-latest}\
     -ldflags "-s -w -X ${VERSION_PKG}.RELEASE=${GIT_TAG} -X ${VERSION_PKG}.COMMIT=${GIT_COMMIT} -X ${VERSION_PKG}.REPO=${GIT_REPO}"\
     -o haproxy-ingress pkg/main.go
 
-FROM registry.pulsepoint.com/haproxy:v2.4_ppfp_0.6.0
+FROM registry.pulsepoint.com/haproxy:v2.4_ppfp_0.6.1
 
 USER root
 
