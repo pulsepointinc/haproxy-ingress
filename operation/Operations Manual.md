@@ -1,0 +1,31 @@
+## k8s deployment overviews
+
+haproxy-ingress pods are in the namespace `ingress` and can be inspected with
+
+```sh
+kubectl --kubeconfig ~/.kube/config.ma2 -n ingress get pods
+```
+
+There are 4 Daemon Sets: haproxy-bh1, haproxy-bh2, haproxy-tr1, haproxy-tr2
+
+
+## To bash into a running ingress
+
+kubectl --kubeconfig ~/.kube/config.ma2 -n ingress exec -it haproxy-bh2-vpkql -- bash
+
+## To find out what haproxy-ingress produces partial results without 'syn' part
+
+From a node running bid:
+
+```sh
+sudo nsenter -t `ps auxw | grep java | grep header-bidder | grep -v grep | head -n 1 | awk '{print $2}'` -n tcpdump -nnn -c 100000 -A dst port 8072 | grep -a1 'ppfp: {.*cap_drv_id":0.*' | grep 'x-pphn' | sort | uniq -c | sort -nr
+```
+
+## Applying changes to k8s maps without commiting into kube-manifests
+
+From local kube-manifests working copy: 
+
+```sh
+kubectl --context sjc apply --dry-run=server -f bh/ingresses/bh-ingress-haproxy-ing.yaml -f bh/ingresses/bh-ingress-haproxy-ing.yaml -f tr/ingresses/tr-ingress-haproxy-ing.yaml
+```
+
