@@ -29,3 +29,13 @@ From local kube-manifests working copy:
 kubectl --context sjc apply --dry-run=server -f bh/ingresses/bh-ingress-haproxy-ing.yaml -f bh/ingresses/bh-ingress-haproxy-ing.yaml -f tr/ingresses/tr-ingress-haproxy-ing.yaml
 ```
 
+# Simulate reloading
+
+To simulate reloading that happens in haproxy-ingress, you can run
+
+```bash
+haproxy -f /etc/haproxy -p /var/run/haproxy/haproxy.pid -D -sf CURRENT_HAPROXY_PID -x /var/run/haproxy/admin.sock
+```
+
+from a haproxy-ingress pod. Where CURRENT_HAPROXY_PID needs to be substituted with a pid of the currently running haproxy master.
+
